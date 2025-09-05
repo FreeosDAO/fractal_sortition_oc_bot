@@ -1,0 +1,37 @@
+{
+  "canisters": {
+    "fractal_sortition_oc_bot_backend": {
+      "main": "src/fractal_sortition_oc_bot_backend/main.mo",
+      "type": "motoko"
+    },
+    "fractal_sortition_oc_bot_frontend": {
+      "dependencies": [
+        "fractal_sortition_oc_bot_backend"
+      ],
+      "source": [
+        "src/fractal_sortition_oc_bot_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "fractal_sortition_oc_bot_frontend"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "type": "custom",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
