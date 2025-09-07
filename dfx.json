@@ -5,12 +5,8 @@
       "type": "motoko"
     },
     "fractal_sortition_oc_bot_frontend": {
-      "dependencies": [
-        "fractal_sortition_oc_bot_backend"
-      ],
-      "source": [
-        "src/fractal_sortition_oc_bot_frontend/dist"
-      ],
+      "dependencies": ["fractal_sortition_oc_bot_backend"],
+      "source": ["src/fractal_sortition_oc_bot_frontend/dist"],
       "type": "assets",
       "workspace": "fractal_sortition_oc_bot_frontend"
     },
@@ -29,9 +25,18 @@
   "defaults": {
     "build": {
       "args": "",
-      "packtool": ""
+      "packtool": "mops sources"
     }
   },
   "output_env_file": ".env",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8080",
+      "type": "ephemeral",
+      "replica": {
+        "subnet_type": "system"
+      }
+    }
+  },
   "version": 1
 }
