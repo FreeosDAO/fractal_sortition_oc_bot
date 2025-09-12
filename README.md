@@ -20,6 +20,7 @@ Community members opt-in to participate.
 **Commands**:
 
 `/volunteer`: Registers the user as a volunteer.
+`/list_volunteers`: Lists all users who registered as volunteers as well as when they registered.
 
 ## 2. To be continued
 
@@ -46,3 +47,17 @@ After registering the bot, you will still have to "invite" it to the channel by 
 Once the bot is added to the channel, you can use its commands.
 
 For more detailed instructions on how to add the bot, please refer to the [Bot SDK's "Get Started" guide](https://github.com/open-chat-labs/open-chat-bots/blob/main/GETSTARTED.md).
+
+## Updating the bot
+
+If you add new commands to the bot, there currently isn't a way to seemlessly upgrade the bot commands from a running OpenChat instance.
+
+In order to test new commands, you have to:
+
+- Delete the `.dfx/` at the root
+- Restart your DFX with `dfx start --clean`
+- Re-install OpenChat
+- Re-deploy the bot
+- Create a group chat and register the bot
+
+It is also recommended to clear the browser cache.
