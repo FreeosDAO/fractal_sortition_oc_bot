@@ -20,13 +20,14 @@ Community members opt-in to participate.
 **Commands**:
 
 `/volunteer`: Registers the user as a volunteer.
+
 `/list_volunteers`: Lists all users who registered as volunteers as well as when they registered.
 
 ## 2. To be continued
 
 # Testing the bot
 
-**Prerequisites**: DFX 0.29.0
+**Prerequisites**: DFX 0.29.1
 
 In order to test the bot, you need a locally running instance of OpenChat running.
 
