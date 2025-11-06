@@ -6,5 +6,10 @@ module {
     registered_at : Time.Time;
   };
 
-  public type VolunteerRegistry = Map.Map<Principal, Map.Map<Principal, VolunteerInfo>>;
+  public type Community = {
+    volunteers : Map.Map<Principal, VolunteerInfo>;
+    min_num_volunteers : Nat;
+  };
+
+  public type CommunityRegistry = Map.Map<Principal, Community>;
 };

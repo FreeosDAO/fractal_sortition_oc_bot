@@ -9,11 +9,11 @@ import Types "types";
 
 // The "list_volunteers" function returns all users that have volunteered in a community
 module {
-  public func build(volunteerRegistry : Types.VolunteerRegistry) : Sdk.Command.Handler {
+  public func build(communityRegistry : Types.CommunityRegistry) : Sdk.Command.Handler {
     {
       definition = definition();
       execute = func(c : Sdk.OpenChat.Client, ctx : Sdk.Command.Context) : async Sdk.Command.Result {
-        await execute(c, ctx, volunteerRegistry);
+        await execute(c, ctx, communityRegistry);
       };
     };
   };
@@ -21,48 +21,44 @@ module {
   func execute(
     client : Sdk.OpenChat.Client,
     context : Sdk.Command.Context,
-    volunteerRegistry : Types.VolunteerRegistry,
+    communityRegistry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
-    // Get the communityCanister.
-    // We enforce volunteering from inside communities, so we can rely on the installation location being a community.
-    switch (CommandScope.toLocation(context.scope)) {
-      case (#Community(communityId)) {
-        switch (Map.get(volunteerRegistry, Principal.compare, communityId)) {
-          case (null) {
-            let message = await client.sendTextMessage("There are no registered volunteers.").executeThenReturnMessage(null);
+    // Get the community ID.
+    // We enforce volunteering from inside communities
+    // For that, we can rely on the constraint that the installation location must be a community.
+    let #Community(communityId) = CommandScope.toLocation(context.scope) else {
+      let message = await client.sendTextMessage(
+        "The bot is not installed in a community."
+      ).executeThenReturnMessage(null);
 
-            return #ok { message = message };
-          };
-
-          case (?volunteers) {
-            // Get the number of volunteers
-            let count = Map.size(volunteers);
-            var text = "Registered volunteers (" # Nat.toText(count) # " total)";
-
-            if (count > 0) {
-              text #= ":";
-            };
-
-            for ((principal, info) in Map.entries(volunteers)) {
-              // Append to text
-              // At the moment, there is no great support for formatting the message with line breaks.
-              // Also, transforming the principal to a user name is possible but will result in a ping for the user.
-              text #= " " # Principal.toText(principal);
-            };
-
-            let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
-
-            return #ok { message = message };
-          };
-        };
-      };
-
-      case (_) {
-        let message = await client.sendTextMessage("The bot is not installed in a community").executeThenReturnMessage(null);
-
-        return #ok { message = message };
-      };
+      return #ok { message };
     };
+
+    // Get the community data
+    let ?community = Map.get(communityRegistry, Principal.compare, communityId) else {
+      let message = await client.sendTextMessage(
+        "There are no registered volunteers." // We only have a community registered when the first person volunteers
+      ).executeThenReturnMessage(null);
+
+      return #ok { message };
+    };
+
+    // Get the volunteers
+    let volunteers = community.volunteers;
+    let count = Map.size(volunteers);
+
+    // Construct the message
+    var text = "Registered volunteers (" # Nat.toText(count) # " total)";
+
+    if (count > 0) text #= ":";
+
+    for ((principal, _) in Map.entries(volunteers)) {
+      text #= " " # Principal.toText(principal);
+    };
+
+    let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
+
+    return #ok { message };
   };
 
   func definition() : Sdk.Definition.Command {

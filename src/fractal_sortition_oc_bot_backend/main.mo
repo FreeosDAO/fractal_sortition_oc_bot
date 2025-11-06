@@ -11,11 +11,11 @@ import ListVolunteers "list_volunteers";
 
 persistent actor class FractalSortitionBot(key : Text) {
   // State
-  var volunteerRegistry : Types.VolunteerRegistry = Map.empty();
+  var communityRegistry : Types.CommunityRegistry = Map.empty();
 
   // Command registry
   transient let ocPublicKey = Sdk.parsePublicKeyOrTrap(key);
-  transient let registry = Sdk.Command.Registry().register(Volunteer.build(volunteerRegistry)).register(ListVolunteers.build(volunteerRegistry));
+  transient let registry = Sdk.Command.Registry().register(Volunteer.build(communityRegistry)).register(ListVolunteers.build(communityRegistry));
   transient let router = Sdk.Http.Router().get("/*", Definition.handler(registry.definitions())).post(
     "/execute_command",
     func(request : Sdk.Http.Request) : async Sdk.Http.Response {
