@@ -6,9 +6,10 @@ import Env "mo:openchat-bot-sdk/env";
 
 import Types "types";
 import Definition "definition";
-import Volunteer "commands/volunteer";
-import SetMinimumNumberOfVolunteers "commands/set_minimum_number_of_volunteers";
 import ListVolunteers "commands/list_volunteers";
+import SetMinimumNumberOfVolunteers "commands/set_minimum_number_of_volunteers";
+import ShowCommunityConfig "commands/show_community_config";
+import Volunteer "commands/volunteer";
 
 persistent actor class FractalSortitionBot(key : Text) {
   // State
@@ -16,7 +17,14 @@ persistent actor class FractalSortitionBot(key : Text) {
 
   // Command registry
   transient let ocPublicKey = Sdk.parsePublicKeyOrTrap(key);
-  transient let registry = Sdk.Command.Registry().register(Volunteer.build(communityRegistry)).register(SetMinimumNumberOfVolunteers.build(communityRegistry)).register(ListVolunteers.build(communityRegistry));
+  // prettier-ignore
+  transient let registry = (
+    Sdk.Command.Registry()
+      .register(Volunteer.build(communityRegistry))
+      .register(SetMinimumNumberOfVolunteers.build(communityRegistry))
+      .register(ListVolunteers.build(communityRegistry))
+      .register(ShowCommunityConfig.build(communityRegistry))
+  );
   transient let router = Sdk.Http.Router().get("/*", Definition.handler(registry.definitions())).post(
     "/execute_command",
     func(request : Sdk.Http.Request) : async Sdk.Http.Response {
