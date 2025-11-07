@@ -23,17 +23,20 @@ module {
     // Get community
     let ?(_, community) = Utils.getCommunity(context.scope, communityRegistry) else {
       let message = await client.sendTextMessage(
-        "Volunteers can only be added from inside of a community."
+        "The config can only be shown from inside of a community."
       ).executeThenReturnMessage(null);
 
       return #ok { message };
     };
     // Construct message
-    // This will have to be adjusted when we add more parameters
-    var text = "Required number of volunteers: " # Int.toText(community.config.min_num_volunteers);
-    let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
+    let message = await client.sendTextMessage(getConfigText(community)).executeThenReturnMessage(null);
 
     return #ok { message };
+  };
+
+  public func getConfigText(community : Types.Community) : Text {
+    // This will have to be adjusted when we add more parameters
+    "Required number of volunteers: " # Int.toText(community.config.min_num_volunteers) # ", Optimization mode: " # Types.optimizationModeToText(community.config.optimization_mode);
   };
 
   func definition() : Sdk.Definition.Command {

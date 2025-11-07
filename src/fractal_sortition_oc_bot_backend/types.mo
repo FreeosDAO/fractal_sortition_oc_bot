@@ -6,9 +6,22 @@ module {
     registered_at : Time.Time;
   };
 
+  public type OptimizationMode = {
+    #meritocracy;
+    #speed;
+  };
+
+  public func optimizationModeToText(mode : OptimizationMode) : Text {
+    switch (mode) {
+      case (#meritocracy) "Meritocracy";
+      case (#speed) "Speed";
+    };
+  };
+
   public type Community = {
     config : {
       min_num_volunteers : Int;
+      optimization_mode : OptimizationMode;
     };
     volunteers : Map.Map<Principal, VolunteerInfo>;
   };
