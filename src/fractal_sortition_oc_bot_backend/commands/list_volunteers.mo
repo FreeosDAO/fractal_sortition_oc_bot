@@ -3,9 +3,9 @@ import Nat "mo:core/Nat";
 import Map "mo:core/Map";
 
 import Sdk "mo:openchat-bot-sdk";
-import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 
-import Types "types";
+import Types "../types";
+import Utils "../utils/get_community";
 
 // The "list_volunteers" function returns all users that have volunteered in a community
 module {
@@ -23,30 +23,17 @@ module {
     context : Sdk.Command.Context,
     communityRegistry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
-    // Get the community ID.
-    // We enforce volunteering from inside communities
-    // For that, we can rely on the constraint that the installation location must be a community.
-    let #Community(communityId) = CommandScope.toLocation(context.scope) else {
+    // Get community
+    let ?(_, community) = Utils.getCommunity(context.scope, communityRegistry) else {
       let message = await client.sendTextMessage(
-        "The bot is not installed in a community."
+        "Volunteers can only be listed from inside of a community."
       ).executeThenReturnMessage(null);
 
       return #ok { message };
     };
-
-    // Get the community data
-    let ?community = Map.get(communityRegistry, Principal.compare, communityId) else {
-      let message = await client.sendTextMessage(
-        "There are no registered volunteers." // We only have a community registered when the first person volunteers
-      ).executeThenReturnMessage(null);
-
-      return #ok { message };
-    };
-
     // Get the volunteers
     let volunteers = community.volunteers;
     let count = Map.size(volunteers);
-
     // Construct the message
     var text = "Registered volunteers (" # Nat.toText(count) # " total)";
 
@@ -65,14 +52,14 @@ module {
     {
       name = "list_volunteers";
       description = ?"Lists all volunteers";
-      placeholder = null;
+      placeholder = ?"Fetching volunteers...";
       params = [];
       permissions = {
         community = [];
         chat = [];
         message = [#Text];
       };
-      default_role = null;
+      default_role = ?#Admin;
       direct_messages = null;
     };
   };

@@ -3,9 +3,9 @@ import Map "mo:core/Map";
 import Time "mo:core/Time";
 
 import Sdk "mo:openchat-bot-sdk";
-import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 
-import Types "types";
+import Types "../types";
+import Utils "../utils/get_community";
 
 // The "volunteer" function registers the person calling it as a volunteer
 module {
@@ -23,31 +23,16 @@ module {
     context : Sdk.Command.Context,
     communityRegistry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
-    // Get the userId of the person volunteering
-    let userId = context.command.initiator;
-    // Ensure command is executed inside a community
-    let #Community(communityId) = CommandScope.toLocation(context.scope) else {
+    // Get community
+    let ?(_, community) = Utils.getCommunity(context.scope, communityRegistry) else {
       let message = await client.sendTextMessage(
         "Volunteers can only be added from inside of a community."
       ).executeThenReturnMessage(null);
 
       return #ok { message };
     };
-    // Get existing community, or create a new one if it doesn’t exist
-    let community = switch (Map.get(communityRegistry, Principal.compare, communityId)) {
-      case (?c) c;
-      case (null) {
-        // Create a new community
-        let newCommunity : Types.Community = {
-          volunteers = Map.empty<Principal, Types.VolunteerInfo>();
-          min_num_volunteers = 21;
-        };
-
-        Map.add(communityRegistry, Principal.compare, communityId, newCommunity);
-
-        newCommunity;
-      };
-    };
+    // Get the userId of the person volunteering
+    let userId = context.command.initiator;
 
     // Check whether the user is already included in the community's list of volunteers
     switch (Map.get(community.volunteers, Principal.compare, userId)) {
@@ -77,14 +62,14 @@ module {
     {
       name = "volunteer";
       description = ?"Registers you as a volunteer";
-      placeholder = null;
+      placeholder = ?"Registering...";
       params = [];
       permissions = {
         community = [];
         chat = [];
         message = [#Text];
       };
-      default_role = null;
+      default_role = ?#Participant;
       direct_messages = null;
     };
   };

@@ -7,8 +7,10 @@ module {
   };
 
   public type Community = {
+    config : {
+      min_num_volunteers : Int;
+    };
     volunteers : Map.Map<Principal, VolunteerInfo>;
-    min_num_volunteers : Nat;
   };
 
   public type CommunityRegistry = Map.Map<Principal, Community>;
