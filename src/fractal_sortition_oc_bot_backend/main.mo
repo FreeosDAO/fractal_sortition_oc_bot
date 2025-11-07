@@ -7,8 +7,8 @@ import Env "mo:openchat-bot-sdk/env";
 import Types "types";
 import Definition "definition";
 import ListVolunteers "commands/list_volunteers";
-import SetMinimumNumberOfVolunteers "commands/set_minimum_number_of_volunteers";
 import ShowCommunityConfig "commands/show_community_config";
+import UpdateCommunityConfig "commands/update_community_config";
 import Volunteer "commands/volunteer";
 
 persistent actor class FractalSortitionBot(key : Text) {
@@ -20,10 +20,10 @@ persistent actor class FractalSortitionBot(key : Text) {
   // prettier-ignore
   transient let registry = (
     Sdk.Command.Registry()
-      .register(Volunteer.build(communityRegistry))
-      .register(SetMinimumNumberOfVolunteers.build(communityRegistry))
       .register(ListVolunteers.build(communityRegistry))
       .register(ShowCommunityConfig.build(communityRegistry))
+      .register(UpdateCommunityConfig.build(communityRegistry))
+      .register(Volunteer.build(communityRegistry))
   );
   transient let router = Sdk.Http.Router().get("/*", Definition.handler(registry.definitions())).post(
     "/execute_command",

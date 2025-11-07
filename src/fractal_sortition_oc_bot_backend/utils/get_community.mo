@@ -24,6 +24,7 @@ module {
         let newCommunity : Types.Community = {
           config = {
             min_num_volunteers = 21; // This is the default number of volunteers we require to start rounds.
+            optimization_mode = #meritocracy; // By default, we want to encourage more discussions.
           };
           volunteers = Map.empty<Principal, Types.VolunteerInfo>();
         };
