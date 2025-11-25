@@ -1,8 +1,12 @@
 import Sdk "mo:openchat-bot-sdk";
 import Map "mo:core/Map";
+import Array "mo:core/Array";
+import Iter "mo:core/Iter";
+import Principal "mo:core/Principal";
 
 import Types "../types";
-import Utils "../utils/get_community";
+import CommunityUtils "../utils/get_community";
+import VolunteerUtils "../utils/shuffle_volunteers";
 
 // The "start_fractal_sortition" command creates the initial set of groups based on the list of volunteers
 module {
@@ -21,7 +25,7 @@ module {
     communityRegistry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(_, community) = Utils.getCommunity(context.scope, communityRegistry) else {
+    let ?(_, community) = CommunityUtils.getCommunity(context.scope, communityRegistry) else {
       let message = await client.sendTextMessage(
         "Fractal sortition can only be started from inside of a community."
       ).executeThenReturnMessage(null);
@@ -38,7 +42,15 @@ module {
       return #ok { message };
     };
 
-    let message = await client.sendTextMessage("Created groups").executeThenReturnMessage(null);
+    // We shuffle the list of volunteers before creating the groups.
+    let shuffled_volunteers = await VolunteerUtils.shuffleVolunteers(Array.fromIter(Map.entries(community.volunteers)));
+    var text = "Created groups:";
+
+    for ((principal, _) in Iter.fromArray(shuffled_volunteers)) {
+      text #= " " # Principal.toText(principal);
+    };
+
+    let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
 
     return #ok { message };
   };
@@ -50,7 +62,7 @@ module {
       placeholder = ?"Creating groups...";
       params = [];
       permissions = {
-        community = [];
+        community = [#CreatePrivateChannel];
         chat = [];
         message = [#Text];
       };

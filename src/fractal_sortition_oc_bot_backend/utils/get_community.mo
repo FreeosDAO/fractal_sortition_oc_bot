@@ -1,6 +1,5 @@
 import Principal "mo:core/Principal";
 import Map "mo:core/Map";
-
 import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 
 import Types "../types";
