@@ -8,6 +8,7 @@ import Types "types";
 import Definition "definition";
 import ListVolunteers "commands/list_volunteers";
 import ShowCommunityConfig "commands/show_community_config";
+import StartFractalSortition "commands/start_fractal_sortition";
 import UpdateCommunityConfig "commands/update_community_config";
 import Volunteer "commands/volunteer";
 
@@ -22,6 +23,7 @@ persistent actor class FractalSortitionBot(key : Text) {
     Sdk.Command.Registry()
       .register(ListVolunteers.build(communityRegistry))
       .register(ShowCommunityConfig.build(communityRegistry))
+      .register(StartFractalSortition.build(communityRegistry))
       .register(UpdateCommunityConfig.build(communityRegistry))
       .register(Volunteer.build(communityRegistry))
   );
