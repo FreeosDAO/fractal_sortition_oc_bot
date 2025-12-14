@@ -3,10 +3,12 @@ import Map "mo:core/Map";
 import Array "mo:core/Array";
 import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
+import Nat "mo:core/Nat";
 
 import Types "../types";
 import CommunityUtils "../utils/get_community";
 import VolunteerUtils "../utils/shuffle_volunteers";
+import GroupSizeUtils "../utils/get_group_size";
 
 // The "start_fractal_sortition" command creates the initial set of groups based on the list of volunteers
 module {
@@ -44,7 +46,11 @@ module {
 
     // We shuffle the list of volunteers before creating the groups.
     let shuffled_volunteers = await VolunteerUtils.shuffleVolunteers(Array.fromIter(Map.entries(community.volunteers)));
-    var text = "Created groups:";
+    let group_size = GroupSizeUtils.get_group_size(
+      Map.size(community.volunteers),
+      community.config.optimization_mode,
+    );
+    var text = "Created groups of size " # Nat.toText(group_size) # " ";
 
     for ((principal, _) in Iter.fromArray(shuffled_volunteers)) {
       text #= " " # Principal.toText(principal);
