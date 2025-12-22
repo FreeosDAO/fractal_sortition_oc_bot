@@ -40,7 +40,7 @@ module {
         );
 
         // Invite members to channel
-        // DISCLAIMER: This currently adds users to the channel from which the command has been initiated. This seems to be a bug in OC
+        // DISCLAIMER: Currently, we get an InitiatorNotAuthorized error here. This requires further investigation
         let invitation_result = await client.inviteUsers(user_ids).inChannel(?channel.channel_id).execute();
 
         switch (invitation_result) {
@@ -49,7 +49,7 @@ module {
           };
 
           case _ {
-            Debug.print(debug_show (invitation_result));
+            Debug.print("Failed to invite users " # debug_show (invitation_result));
 
             return #err("Failed to invite users");
           };
@@ -57,7 +57,7 @@ module {
       };
 
       case _ {
-        Debug.print(debug_show (channel_result));
+        Debug.print("Failed to create channel " # debug_show (channel_result));
 
         return #err("Failed to create channel");
       };
