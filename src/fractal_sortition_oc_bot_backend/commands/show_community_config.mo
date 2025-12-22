@@ -1,5 +1,5 @@
-import Sdk "mo:openchat-bot-sdk";
 import Int "mo:core/Int";
+import Sdk "mo:openchat-bot-sdk";
 
 import Types "../types";
 import Utils "../utils/get_community";

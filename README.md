@@ -23,7 +23,18 @@ Community members opt-in to participate.
 
 `/list_volunteers`: Lists all users who registered as volunteers as well as when they registered.
 
-## 2. To be continued
+`/show_community_config`: Shows the required number of volunteers and the optimization mode (speed/meritocracy).
+
+`update_community_config`: Ability to change the number of required volunteers and optimization mode (speed/meritocracy).
+
+## 2. Discussion and Voting Phase
+
+Once the Fractal Sortition started, the volunteers are grouped and discuss in dedicated channels. 
+In each round, they are voting for someone to advance.
+
+**Commands**:
+
+`/start_fractal_sortition`: This creates the initial groups based on the full list of volunteers.
 
 # Testing the bot
 

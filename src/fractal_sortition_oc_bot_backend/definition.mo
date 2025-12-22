@@ -5,9 +5,14 @@ module {
     let definition : Sdk.Definition.Bot = {
       description = "A bot to create and manage a fractal sortition setup.";
       commands = commands;
-      autonomous_config = null;
+      autonomous_config = ?{
+        permissions = ?{
+          community = [#CreatePrivateChannel];
+          chat = [#InviteUsers];
+          message = [#Text];
+        }
+      };
       default_subscriptions = null;
-      data_encoding = ?#Candid;
       restricted_locations = ?[#Community];
     };
 

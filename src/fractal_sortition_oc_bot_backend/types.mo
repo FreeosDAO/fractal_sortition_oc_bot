@@ -1,5 +1,5 @@
-import Time "mo:core/Time";
 import Map "mo:core/Map";
+import Time "mo:core/Time";
 
 module {
   public type VolunteerInfo = {

@@ -1,7 +1,6 @@
-import Principal "mo:core/Principal";
-import Nat "mo:core/Nat";
 import Map "mo:core/Map";
-
+import Nat "mo:core/Nat";
+import Principal "mo:core/Principal";
 import Sdk "mo:openchat-bot-sdk";
 
 import Types "../types";
