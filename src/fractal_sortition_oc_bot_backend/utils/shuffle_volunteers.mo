@@ -1,5 +1,5 @@
-import Random "mo:core/Random";
 import Array "mo:core/Array";
+import Random "mo:core/Random";
 
 import Types "../types";
 
