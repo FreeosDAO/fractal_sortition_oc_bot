@@ -8,11 +8,11 @@ import Utils "../utils/get_community";
 
 // The "volunteer" function registers the person calling it as a volunteer
 module {
-  public func build(communityRegistry : Types.CommunityRegistry) : Sdk.Command.Handler {
+  public func build(community_registry : Types.CommunityRegistry) : Sdk.Command.Handler {
     {
       definition = definition();
       execute = func(c : Sdk.OpenChat.Client, ctx : Sdk.Command.Context) : async Sdk.Command.Result {
-        await execute(c, ctx, communityRegistry);
+        await execute(c, ctx, community_registry);
       };
     };
   };
@@ -20,27 +20,35 @@ module {
   func execute(
     client : Sdk.OpenChat.Client,
     context : Sdk.Command.Context,
-    communityRegistry : Types.CommunityRegistry,
+    community_registry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(_community_id, community) = Utils.getCommunity(context.scope, communityRegistry) else {
+    let ?(_community_id, community) = Utils.getCommunity(context.scope, community_registry) else {
       let message = await client.sendTextMessage(
         "Volunteers can only be added from inside of a community."
       ).executeThenReturnMessage(null);
 
       return #ok { message };
     };
-    // Get the userId of the person volunteering
-    let userId = context.command.initiator;
+    // Get the user_id of the person volunteering
+    let user_id = context.command.initiator;
 
     // Check whether the user is already included in the community's list of volunteers
-    switch (Map.get(community.volunteers, Principal.compare, userId)) {
+    switch (Map.get(community.volunteers, Principal.compare, user_id)) {
       // The user isn't registered yet as a volunteer
       case (null) {
-        Map.add(community.volunteers, Principal.compare, userId, { registered_at = Time.now() });
+        Map.add(
+          community.volunteers,
+          Principal.compare,
+          user_id,
+          {
+            user_id = user_id;
+            registered_at = Time.now();
+          },
+        );
 
         // Construct the message that is returned when the registration was successful
-        let text = "New volunteer in community: @UserId(" # Principal.toText(userId) # ")";
+        let text = "New volunteer in community: @UserId(" # Principal.toText(user_id) # ")";
         let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
 
         return #ok { message = message };

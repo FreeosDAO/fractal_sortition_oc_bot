@@ -2,15 +2,16 @@ import Types "../types";
 
 module {
   // This function determines the group size based on the optimization mode and number of volunteers
-  public func get_group_size(number_of_volunteers : Nat, optimizationMode : Types.OptimizationMode) : Nat {
+  public func getGroupSize(number_of_volunteers : Nat, optimization_mode : Types.OptimizationMode) : Nat {
     // We set default group sizes based on the optimization mode
-    var group_size = if (optimizationMode == #meritocracy) {
+    var group_size = if (optimization_mode == #meritocracy) {
       5;
     } else {
       10;
     };
+
     // For each optimization mode, we want a minimum number of groups
-    var mininum_number_of_groups = if (optimizationMode == #meritocracy) {
+    var mininum_number_of_groups = if (optimization_mode == #meritocracy) {
       8;
     } else {
       4;
