@@ -6,6 +6,7 @@ import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
 import Result "mo:core/Result";
 import Sdk "mo:openchat-bot-sdk";
+import Client "mo:openchat-bot-sdk/client";
 
 import Types "../types";
 import CommunityUtils "../utils/get_community";
@@ -23,7 +24,13 @@ module {
     };
   };
 
-  func create_group_channel(client : Sdk.OpenChat.Client, channel_name : Text, group : [(Principal, Types.VolunteerInfo)]) : async Result.Result<(), Text> {
+  func create_group_channel(
+    context : Sdk.Command.Context,
+    client : Sdk.OpenChat.Client,
+    community_id : Principal,
+    channel_name : Text,
+    group : [(Principal, Types.VolunteerInfo)],
+  ) : async Result.Result<(), Text> {
     // Create private channel
     // For now, we are using private channels as there currently is no way to have public channels
     // where only a subset of the community members are able to send messages.
@@ -39,9 +46,19 @@ module {
           func((p, _)) { p },
         );
 
+        // We are using the bot the bot to create the channel, so they are the owner.
+        // When calling the bot, the caller doesn't have the permission to invite users to that channel.
+        // Therefore, we are using the autonomous client.
+        let autonomous_client = Client.OpenChatClient({
+          apiGateway = context.apiGateway;
+          scope = #Chat(#Channel(community_id, channel.channel_id));
+          jwt = null;
+          messageId = null;
+          thread = null;
+        });
+
         // Invite members to channel
-        // DISCLAIMER: Currently, we get an InitiatorNotAuthorized error here. This requires further investigation
-        let invitation_result = await client.inviteUsers(user_ids).inChannel(?channel.channel_id).execute();
+        let invitation_result = await autonomous_client.inviteUsers(user_ids).inChannel(?channel.channel_id).execute();
 
         switch (invitation_result) {
           case (#ok(#Success)) {
@@ -70,7 +87,7 @@ module {
     communityRegistry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(_, community) = CommunityUtils.getCommunity(context.scope, communityRegistry) else {
+    let ?(community_id, community) = CommunityUtils.getCommunity(context.scope, communityRegistry) else {
       let message = await client.sendTextMessage(
         "Fractal sortition can only be started from inside of a community."
       ).executeThenReturnMessage(null);
@@ -129,7 +146,7 @@ module {
     // Create the group channels
     for ((i, group) in Array.enumerate(groups)) {
       let channel_name = "Round 1 - Group " # Nat.toText(i + 1);
-      let channel_creation = await create_group_channel(client, channel_name, group);
+      let channel_creation = await create_group_channel(context, client, community_id, channel_name, group);
 
       switch (channel_creation) {
         case (#ok()) {};

@@ -23,7 +23,7 @@ module {
     communityRegistry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(_, community) = Utils.getCommunity(context.scope, communityRegistry) else {
+    let ?(_community_id, community) = Utils.getCommunity(context.scope, communityRegistry) else {
       let message = await client.sendTextMessage(
         "Volunteers can only be added from inside of a community."
       ).executeThenReturnMessage(null);
