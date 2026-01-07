@@ -9,31 +9,29 @@ module {
   // If we don't have a community yet in our registry for the community the command is executed from, we create one here.
   public func getCommunity(
     scope : CommandScope.BotCommandScope,
-    communityRegistry : Types.CommunityRegistry,
+    community_registry : Types.CommunityRegistry,
   ) : ?(Principal, Types.Community) {
-    let #Community(communityId) = CommandScope.toLocation(scope) else {
+    let #Community(community_id) = CommandScope.toLocation(scope) else {
       return null;
     };
 
     // Get existing community, or create a new one if it doesn’t exist
-    let community = switch (Map.get(communityRegistry, Principal.compare, communityId)) {
+    let community = switch (Map.get(community_registry, Principal.compare, community_id)) {
       case (?c) c;
       case (null) {
         // Create a new community
-        let newCommunity : Types.Community = {
-          config = {
-            min_num_volunteers = 21; // This is the default number of volunteers we require to start rounds.
-            optimization_mode = #meritocracy; // By default, we want to encourage more discussions.
-          };
-          volunteers = Map.empty<Principal, Types.VolunteerInfo>();
+        let new_community : Types.Community = {
+          id = community_id;
+          volunteers = Map.empty<Principal, Types.Volunteer>();
+          cohorts = Map.empty<Nat, Types.Cohort>();
         };
 
-        Map.add(communityRegistry, Principal.compare, communityId, newCommunity);
+        Map.add(community_registry, Principal.compare, community_id, new_community);
 
-        newCommunity;
+        new_community;
       };
     };
 
-    ?(communityId, community);
+    ?(community_id, community);
   };
 };

@@ -8,11 +8,11 @@ import Utils "../utils/get_community";
 
 // The "list_volunteers" function returns all users that have volunteered in a community
 module {
-  public func build(communityRegistry : Types.CommunityRegistry) : Sdk.Command.Handler {
+  public func build(community_registry : Types.CommunityRegistry) : Sdk.Command.Handler {
     {
       definition = definition();
       execute = func(c : Sdk.OpenChat.Client, ctx : Sdk.Command.Context) : async Sdk.Command.Result {
-        await execute(c, ctx, communityRegistry);
+        await execute(c, ctx, community_registry);
       };
     };
   };
@@ -20,10 +20,10 @@ module {
   func execute(
     client : Sdk.OpenChat.Client,
     context : Sdk.Command.Context,
-    communityRegistry : Types.CommunityRegistry,
+    community_registry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(_community_id, community) = Utils.getCommunity(context.scope, communityRegistry) else {
+    let ?(_community_id, community) = Utils.getCommunity(context.scope, community_registry) else {
       let message = await client.sendTextMessage(
         "Volunteers can only be listed from inside of a community."
       ).executeThenReturnMessage(null);
