@@ -70,7 +70,7 @@ module {
   // Within the group, they cast their vote for the other members of their group.
   public type Participant = {
     id : Principal;
-    vote : ?Vote;
+    var vote : ?Vote;
   };
 
   // A vote saves who casted the vote and for whom they voted.

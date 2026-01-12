@@ -210,14 +210,16 @@ module {
 
       // We create particpants based on the volunteers
       for ((user_id, _volunteer) in group_volunteers.vals()) {
+        let participant : Types.Participant = {
+          id = user_id;
+          var vote = null;
+        };
+
         Map.add(
           group_participants,
           Principal.compare,
           user_id,
-          {
-            id = user_id;
-            vote = null;
-          },
+          participant,
         );
       };
 
@@ -235,14 +237,16 @@ module {
     let last_participants = Map.empty<Principal, Types.Participant>();
 
     for ((user_id, _volunteer) in last_volunteers.vals()) {
+      let participant : Types.Participant = {
+        id = user_id;
+        var vote = null;
+      };
+
       Map.add(
         last_participants,
         Principal.compare,
         user_id,
-        {
-          id = user_id;
-          vote = null;
-        },
+        participant,
       );
     };
 

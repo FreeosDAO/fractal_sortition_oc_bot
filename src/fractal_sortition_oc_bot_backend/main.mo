@@ -6,6 +6,7 @@ import Env "mo:openchat-bot-sdk/env";
 import CreateCohort "commands/create_cohort";
 import ListVolunteers "commands/list_volunteers";
 import Volunteer "commands/volunteer";
+import Vote "commands/vote";
 import Definition "definition";
 import Types "types";
 persistent actor class FractalSortitionBot(key : Text) {
@@ -20,6 +21,7 @@ persistent actor class FractalSortitionBot(key : Text) {
       .register(CreateCohort.build(community_registry))
       .register(ListVolunteers.build(community_registry))
       .register(Volunteer.build(community_registry))
+      .register(Vote.build(community_registry))
   );
   transient let router = Sdk.Http.Router().get("/*", Definition.handler(registry.definitions())).post(
     "/execute_command",
