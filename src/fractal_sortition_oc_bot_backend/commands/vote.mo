@@ -1,7 +1,7 @@
-import Debug "mo:core/Debug";
 import Map "mo:core/Map";
-import Sdk "mo:openchat-bot-sdk";
 import Principal "mo:core/Principal";
+import Time "mo:core/Time";
+import Sdk "mo:openchat-bot-sdk";
 import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 
 import Types "../types";
@@ -63,6 +63,8 @@ module {
 
         // Get the user who casts the vote
         let voter_id = context.command.initiator;
+        // Get the candidate receiving the vote
+        let recipient_id = Sdk.Command.Arg.user(context.command, "recipient_id");
 
         // Get the community and channel ID
         let chat_details = switch (CommandScope.chatDetails(context.scope)) {
@@ -75,17 +77,13 @@ module {
                 return #ok { message };
             };
         };
-        let #Channel(community_id, channel_id) = chat_details.chat else {
+        let #Channel(_, channel_id) = chat_details.chat else {
             let message = await client.sendTextMessage(
                 "Could not get chat details."
             ).executeThenReturnMessage(null);
 
             return #ok { message };
         };
-
-        Debug.print("Voter ID: " # debug_show (voter_id));
-        Debug.print("Community ID: " # debug_show (community_id));
-        Debug.print("Channel ID: " # debug_show (channel_id));
 
         // Retrieve the vote context
         let ?vote_context = getVoteContext(community, channel_id) else {
@@ -96,7 +94,14 @@ module {
             return #ok { message };
         };
 
-        Debug.print("Vote context: " # debug_show (vote_context));
+        // Check that the recipient is part of the group's participants
+        let ?_recipient = Map.get(vote_context.group.participants, Principal.compare, recipient_id) else {
+            let message = await client.sendTextMessage(
+                "The recipient is not a participant of this group"
+            ).executeThenReturnMessage(null);
+
+            return #ok { message };
+        };
 
         // Check that the user hasn't voted yet
         let ?participant = Map.get(vote_context.group.participants, Principal.compare, voter_id) else {
@@ -115,6 +120,13 @@ module {
             return #ok { message };
         };
 
+        // Save the vote
+        participant.vote := ?{
+            voter_id = voter_id;
+            recipient_id = recipient_id;
+            voted_at = Time.now();
+        };
+
         let text = "The vote has been casted";
         let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
 
@@ -126,7 +138,13 @@ module {
             name = "vote";
             description = ?"Vote for a group member";
             placeholder = ?"Casting vote...";
-            params = [];
+            params = [{
+                name = "recipient_id";
+                description = ?"The member you want to vote for";
+                placeholder = null;
+                required = true;
+                param_type = #UserParam;
+            }];
             permissions = {
                 community = [];
                 chat = [];
