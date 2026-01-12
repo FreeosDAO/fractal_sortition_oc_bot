@@ -13,6 +13,16 @@ Accountability - Non-confidence voting mechanisms maintain delegate responsibili
 
 # How it works
 
+When the bot is installed in an OC community, the Fractal Sortition
+process can be run multiple times.
+
+One entire Fractal Sortition process is what we call a "cohort".
+
+A cohort consists of "rounds". For each round, we have several "groups".
+In these groups, we have "participants" that have been polled based
+on the list of "volunteers". In each group, participants vote for 
+other participants. The winners of each group advance to the next round.
+
 ## 1. Volunteer Phase
 
 Community members opt-in to participate.
@@ -21,11 +31,7 @@ Community members opt-in to participate.
 
 `/volunteer`: Registers the user as a volunteer.
 
-`/list_volunteers`: Lists all users who registered as volunteers as well as when they registered.
-
-`/show_community_config`: Shows the required number of volunteers and the optimization mode (speed/meritocracy).
-
-`update_community_config`: Ability to change the number of required volunteers and optimization mode (speed/meritocracy).
+`/list_volunteers`: Lists all users who registered as volunteers.
 
 ## 2. Discussion and Voting Phase
 
@@ -34,7 +40,9 @@ In each round, they are voting for someone to advance.
 
 **Commands**:
 
-`/start_fractal_sortition`: This creates the initial groups based on the full list of volunteers.
+`/create_cohort`: This starts the Fractal Sortition process for a given topic.
+
+`/vote`: Participants vote for others in their group to advance to the next round.
 
 # Testing the bot
 
