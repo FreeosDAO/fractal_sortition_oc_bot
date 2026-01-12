@@ -66,6 +66,15 @@ module {
         // Get the candidate receiving the vote
         let recipient_id = Sdk.Command.Arg.user(context.command, "recipient_id");
 
+        // Make sure the participant doesn't vote for themselves
+        if (voter_id == recipient_id) {
+            let message = await client.sendTextMessage(
+                "You cannot vote for yourself."
+            ).executeThenReturnMessage(null);
+
+            return #ok { message };
+        };
+
         // Get the community and channel ID
         let chat_details = switch (CommandScope.chatDetails(context.scope)) {
             case (?details) details;
