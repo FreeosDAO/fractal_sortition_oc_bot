@@ -1,0 +1,104 @@
+import List "mo:core/List";
+import Map "mo:core/Map";
+import Nat "mo:core/Nat";
+import Principal "mo:core/Principal";
+import Client "mo:openchat-bot-sdk/client";
+
+import Types "../types";
+
+module {
+    // This function checks whether all participants have voted.
+    // If yes, it saves the winners in the group if they aren't already.
+    public func analyzeGroup(api_gateway : Principal, community_id : Principal, group : Types.Group) : async () {
+        // Check if all participants have voted
+        if (not allParticipantsVoted(group)) {
+            return;
+        };
+
+        // Check if group already has a winner
+        if (List.size(group.winner_ids) > 0) {
+            return;
+        };
+
+        // Tally votes
+        let tallies = tallyVotes(group);
+
+        // Save winners on group
+        group.winner_ids := getWinners(tallies);
+
+        // Send message to the group who won the vote
+        let autonomous_client = Client.OpenChatClient({
+            apiGateway = api_gateway;
+            scope = #Chat(#Channel(community_id, group.channel_id));
+            jwt = null;
+            messageId = null;
+            thread = null;
+        });
+        var text = if (List.size(group.winner_ids) > 1) {
+            "Winners:";
+        } else {
+            "Winner:";
+        };
+
+        for (principal in List.values(group.winner_ids)) {
+            text #= " @UserId(" # Principal.toText(principal) # ")";
+        };
+
+        // Send the message
+        let _ = await autonomous_client.sendTextMessage(text).execute();
+    };
+
+    // Check whether all participants in a group have voted
+    func allParticipantsVoted(group : Types.Group) : Bool {
+        for ((_, participant) in Map.entries(group.participants)) {
+            if (participant.vote == null) {
+                return false;
+            };
+        };
+
+        return true;
+    };
+
+    // Count the number of votes participants have received
+    func tallyVotes(group : Types.Group) : Map.Map<Principal, Nat> {
+        let tallies = Map.empty<Principal, Nat>();
+
+        for ((_, participant) in Map.entries(group.participants)) {
+            switch (participant.vote) {
+                case (?vote) {
+                    let current = switch (Map.get(tallies, Principal.compare, vote.recipient_id)) {
+                        case (?n) n;
+                        case null 0;
+                    };
+
+                    Map.add(tallies, Principal.compare, vote.recipient_id, current + 1);
+                };
+                case null {};
+            };
+        };
+
+        return tallies;
+    };
+
+    // Get the participant or participants that received the most votes.
+    // If there is a tie, all participants with that vote count are returned.
+    func getWinners(tallies : Map.Map<Principal, Nat>) : List.List<Principal> {
+        var max_tally : Nat = 0;
+        var winners = List.empty<Principal>();
+
+        for ((principal, tally) in Map.entries(tallies)) {
+            if (tally > max_tally) {
+                // We found a bigger tally so we update the max tally
+                max_tally := tally;
+                // We reset the winners
+                winners := List.empty<Principal>();
+
+                List.add(winners, principal);
+            } else if (tally == max_tally) {
+                List.add(winners, principal);
+            };
+        };
+
+        return winners;
+    };
+};

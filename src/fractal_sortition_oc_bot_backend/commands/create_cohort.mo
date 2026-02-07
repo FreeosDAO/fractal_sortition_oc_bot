@@ -13,10 +13,10 @@ import Time "mo:core/Time";
 import Sdk "mo:openchat-bot-sdk";
 import Client "mo:openchat-bot-sdk/client";
 
+import GetCommunity "../lib/get_community";
+import GetGroupSize "../lib/get_group_size";
+import ShuffleVolunteers "../lib/shuffle_volunteers";
 import Types "../types";
-import CommunityUtils "../utils/get_community";
-import GroupSizeUtils "../utils/get_group_size";
-import VolunteerUtils "../utils/shuffle_volunteers";
 
 // The "create_cohort" command creates a cohort and the initial set of groups based on the list of volunteers
 module {
@@ -74,7 +74,7 @@ module {
                 channel_id = channel.channel_id;
                 title = title;
                 participants = participants;
-                winner_ids = List.empty<Principal>();
+                var winner_ids = List.empty<Principal>();
               },
             );
 
@@ -103,7 +103,7 @@ module {
     community_registry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(community_id, community) = CommunityUtils.getCommunity(context.scope, community_registry) else {
+    let ?(community_id, community) = GetCommunity.getCommunity(context.scope, community_registry) else {
       let message = await client.sendTextMessage(
         "A cohort can only be created from inside of a community."
       ).executeThenReturnMessage(null);
@@ -183,10 +183,10 @@ module {
     // GROUP CREATION
 
     // We shuffle the list of volunteers before creating the groups.
-    let shuffled_volunteers = await VolunteerUtils.shuffleVolunteers(Array.fromIter(Map.entries(community.volunteers)));
+    let shuffled_volunteers = await ShuffleVolunteers.shuffleVolunteers(Array.fromIter(Map.entries(community.volunteers)));
 
     // Determine the size and number of groups
-    let group_size = GroupSizeUtils.getGroupSize(
+    let group_size = GetGroupSize.getGroupSize(
       Map.size(community.volunteers),
       parsed_optimization_mode,
     );
@@ -314,7 +314,7 @@ module {
           placeholder = ?"Set minimum";
           required = true;
           param_type = #IntegerParam {
-            min_value = 6; // Having less than 6 volunteers does not allow for creating a meaningful constellation of groups.
+            min_value = 9; // Having less than 9 volunteers does not allow for creating a meaningful constellation of groups.
             max_value = 9999; // We have to provide a max value. Since we don't really have an upper bound for the number of required volunteers we set this very high
             choices = [];
           };
@@ -336,6 +336,27 @@ module {
               {
                 name = "Speed";
                 value = "speed";
+              },
+            ];
+          };
+        },
+        {
+          name = "selection_mode";
+          description = ?"The selection mode";
+          placeholder = ?"Select a mode";
+          required = true;
+          param_type = #StringParam {
+            min_length = 1; // Required parameter; not relevant
+            max_length = 1000; // Required parameter; not relevant
+            multi_line = false; // Required parameter; not relevant
+            choices = [
+              {
+                name = "Single";
+                value = "single";
+              },
+              {
+                name = "Panel";
+                value = "panel";
               },
             ];
           };

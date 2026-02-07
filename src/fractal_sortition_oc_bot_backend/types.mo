@@ -63,7 +63,7 @@ module {
     channel_id : Nat32; // Channel IDs in OC are numbers
     title : Text;
     participants : Map.Map<Principal, Participant>;
-    winner_ids : List.List<Principal>; // We want to allow for mechanisms where multiple people can advance, e.g., in case of ties
+    var winner_ids : List.List<Principal>; // We want to allow for mechanisms where multiple people can advance, e.g., in case of ties
   };
 
   // The people in one group are called participants.

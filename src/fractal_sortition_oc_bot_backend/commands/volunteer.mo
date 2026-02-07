@@ -3,8 +3,8 @@ import Principal "mo:core/Principal";
 import Time "mo:core/Time";
 import Sdk "mo:openchat-bot-sdk";
 
+import GetCommunity "../lib/get_community";
 import Types "../types";
-import Utils "../utils/get_community";
 
 // The "volunteer" function registers the person calling it as a volunteer
 module {
@@ -23,7 +23,7 @@ module {
     community_registry : Types.CommunityRegistry,
   ) : async Sdk.Command.Result {
     // Get community
-    let ?(_community_id, community) = Utils.getCommunity(context.scope, community_registry) else {
+    let ?(_community_id, community) = GetCommunity.getCommunity(context.scope, community_registry) else {
       let message = await client.sendTextMessage(
         "Volunteers can only be added from inside of a community."
       ).executeThenReturnMessage(null);
