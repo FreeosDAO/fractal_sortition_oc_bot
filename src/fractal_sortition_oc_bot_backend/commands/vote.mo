@@ -4,8 +4,9 @@ import Time "mo:core/Time";
 import Sdk "mo:openchat-bot-sdk";
 import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 
+import AnalyzeGroup "../lib/analyze_group";
+import GetCommunity "../lib/get_community";
 import Types "../types";
-import Utils "../utils/get_community";
 
 // The "vote" function registers which group member a person wants to advance to the next round
 module {
@@ -53,7 +54,7 @@ module {
         community_registry : Types.CommunityRegistry,
     ) : async Sdk.Command.Result {
         // Get community
-        let ?(_community_id, community) = Utils.getCommunity(context.scope, community_registry) else {
+        let ?(community_id, community) = GetCommunity.getCommunity(context.scope, community_registry) else {
             let message = await client.sendTextMessage(
                 "Votes can only be casted from inside of a community."
             ).executeThenReturnMessage(null);
@@ -138,6 +139,11 @@ module {
 
         let text = "The vote has been casted";
         let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
+
+        // We will analyze whether the group has a winner in a detached async task
+        ignore async {
+            await AnalyzeGroup.analyzeGroup(context.apiGateway, community_id, vote_context.group);
+        };
 
         return #ok { message = message };
     };
