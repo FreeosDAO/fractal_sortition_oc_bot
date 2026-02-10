@@ -20,9 +20,11 @@ module {
     };
 
     type VoteContext = {
-        cohort_id : Nat;
-        round_iteration : Nat;
+        rounds : Map.Map<Nat, Types.Round>;
+        iteration : Nat;
         group : Types.Group;
+        cohort_title : Text;
+        cohort_config : Types.CohortConfig;
     };
 
     // For now, we have to iterate through all cohorts and their rounds until we
@@ -31,14 +33,16 @@ module {
     // easier to reason about. Should the stored data increase significatnly, we can
     // maintain a reverse index from channel IDs to round and cohort IDs.
     func getVoteContext(community : Types.Community, channel_id : Nat32) : ?VoteContext {
-        for ((cohort_id, cohort) in Map.entries(community.cohorts)) {
-            for ((round_iteration, round) in Map.entries(cohort.rounds)) {
+        for ((_, cohort) in Map.entries(community.cohorts)) {
+            for ((_, round) in Map.entries(cohort.rounds)) {
                 for ((_, group) in Map.entries(round.groups)) {
                     if (group.channel_id == channel_id) {
                         return ?{
-                            cohort_id = cohort_id;
-                            round_iteration = round_iteration;
+                            rounds = cohort.rounds;
+                            iteration = round.iteration;
                             group = group;
+                            cohort_title = cohort.title;
+                            cohort_config = cohort.config;
                         };
                     };
                 };
@@ -142,7 +146,15 @@ module {
 
         // We will analyze whether the group has a winner in a detached async task
         ignore async {
-            await AnalyzeGroup.analyzeGroup(context.apiGateway, community_id, vote_context.group);
+            await AnalyzeGroup.analyzeGroup(
+                context.apiGateway, 
+                community_id, 
+                vote_context.cohort_title,
+                vote_context.rounds, 
+                vote_context.iteration,
+                vote_context.group,
+                vote_context.cohort_config
+            );
         };
 
         return #ok { message = message };

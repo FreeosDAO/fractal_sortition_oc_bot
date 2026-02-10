@@ -1,22 +1,14 @@
 import Array "mo:core/Array";
-import Debug "mo:core/Debug";
-import Float "mo:core/Float";
 import Iter "mo:core/Iter";
-import List "mo:core/List";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
-import Nat32 "mo:core/Nat32";
 import Principal "mo:core/Principal";
-import Result "mo:core/Result";
-import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Sdk "mo:openchat-bot-sdk";
-import Client "mo:openchat-bot-sdk/client";
 
 import GetCommunity "../lib/get_community";
-import GetGroupSize "../lib/get_group_size";
-import ShuffleVolunteers "../lib/shuffle_volunteers";
 import Types "../types";
+import CreateRound "../lib/create_round";
 
 // The "create_cohort" command creates a cohort and the initial set of groups based on the list of volunteers
 module {
@@ -25,74 +17,6 @@ module {
       definition = definition();
       execute = func(c : Sdk.OpenChat.Client, ctx : Sdk.Command.Context) : async Sdk.Command.Result {
         await execute(c, ctx, community_registry);
-      };
-    };
-  };
-
-  func create_group(
-    context : Sdk.Command.Context,
-    client : Sdk.OpenChat.Client,
-    community_id : Principal,
-    round : Types.Round,
-    title : Text,
-    participants : Map.Map<Principal, Types.Participant>,
-  ) : async Result.Result<(), Text> {
-    // Create private channel
-    // For now, we are using private channels as there currently is no way to have public channels
-    // where only a subset of the community members are able to send messages.
-    // We can use public channels once the Bot SDK exposes the functionality to assign roles to users.
-    // In the meantime, we could think of ways to create transparency into the discussions going on
-    // in private groups through different means such as exporting a transcript of the conversations.
-    let channel_result = await client.createChannel(title, false).execute();
-
-    switch (channel_result) {
-      case (#ok(#Success channel)) {
-        let participant_ids : [Principal] = Iter.toArray(Map.keys(participants));
-
-        // We are using the bot the bot to create the channel, so they are the owner.
-        // When calling the bot, the caller doesn't have the permission to invite users to that channel.
-        // Therefore, we are using the autonomous client.
-        let autonomous_client = Client.OpenChatClient({
-          apiGateway = context.apiGateway;
-          scope = #Chat(#Channel(community_id, channel.channel_id));
-          jwt = null;
-          messageId = null;
-          thread = null;
-        });
-
-        // Invite participants to channel
-        let invitation_result = await autonomous_client.inviteUsers(participant_ids).inChannel(?channel.channel_id).execute();
-
-        switch (invitation_result) {
-          case (#ok(#Success)) {
-            // Save the group in the round
-            Map.add(
-              round.groups,
-              Nat32.compare,
-              channel.channel_id,
-              {
-                channel_id = channel.channel_id;
-                title = title;
-                participants = participants;
-                var winner_ids = List.empty<Principal>();
-              },
-            );
-
-            return #ok(());
-          };
-
-          case _ {
-            Debug.print("Failed to invite users " # debug_show (invitation_result));
-
-            return #err("Failed to invite users");
-          };
-        };
-      };
-
-      case _ {
-        Debug.print("Failed to create channel " # debug_show (channel_result));
-
-        return #err("Failed to create channel");
       };
     };
   };
@@ -114,22 +38,33 @@ module {
     // Get the arg values
     let title = Sdk.Command.Arg.text(context.command, "title");
     let min_num_volunteers = Sdk.Command.Arg.int(context.command, "min_num_volunteers");
-    let optimization_mode = Sdk.Command.Arg.text(context.command, "optimization_mode");
+    let optimization_mode_arg = Sdk.Command.Arg.text(context.command, "optimization_mode");
+    let selection_mode_arg = Sdk.Command.Arg.text(context.command, "selection_mode");
 
     // Convert the Text -> OptimizationMode variant
-    let ?parsed_optimization_mode : ?Types.OptimizationMode = switch (optimization_mode) {
-      case ("meritocracy") ?#meritocracy;
-      case ("speed") ?#speed;
+    let optimization_mode : Types.OptimizationMode = switch (optimization_mode_arg) {
+      case ("meritocracy") #meritocracy;
+      case ("speed") #speed;
       case (invalid_value) {
-        Debug.print("Invalid optimization_mode value: " # invalid_value);
-        null;
-      };
-    } else {
-      let message = await client.sendTextMessage(
-        "Invalid optimization mode"
-      ).executeThenReturnMessage(null);
+        let message = await client.sendTextMessage(
+          "Invalid optimization mode " # invalid_value
+        ).executeThenReturnMessage(null);
 
-      return #ok { message };
+        return #ok { message };
+      };
+    };
+
+    // Convert the Text -> SelectionMode variant
+    let selection_mode : Types.SelectionMode = switch (selection_mode_arg) {
+      case ("single") #single;
+      case ("panel") #panel;
+      case (invalid_value) {
+        let message = await client.sendTextMessage(
+          "Invalid selection mode " # invalid_value
+        ).executeThenReturnMessage(null);
+
+        return #ok { message };
+      };
     };
 
     // First, we check that the minimum number of volunteers is reached
@@ -149,9 +84,11 @@ module {
       title = title;
       started_at = Time.now();
       rounds = Map.empty<Nat, Types.Round>();
+      var winner_ids = Array.empty<Principal>();
       config = {
         min_num_volunteers = min_num_volunteers;
-        optimization_mode = parsed_optimization_mode;
+        optimization_mode = optimization_mode;
+        selection_mode = selection_mode;
       };
     };
 
@@ -164,126 +101,22 @@ module {
     );
 
     // ROUND CREATION
-
-    // Create the initial round
-    let round : Types.Round = {
-      iteration = 0; // This is the initial iteration, so we start at 0
-      started_at = Time.now();
-      groups = Map.empty<Nat32, Types.Group>();
-    };
-
-    // Save the round in the cohort
-    Map.add(
-      cohort.rounds,
-      Nat.compare,
-      round.iteration,
-      round,
+    let participants : [Principal] = Array.fromIter(
+      Iter.map(
+        Map.entries(community.volunteers), 
+        func ((user_id, _volunteer)) = user_id
+      )
     );
 
-    // GROUP CREATION
-
-    // We shuffle the list of volunteers before creating the groups.
-    let shuffled_volunteers = await ShuffleVolunteers.shuffleVolunteers(Array.fromIter(Map.entries(community.volunteers)));
-
-    // Determine the size and number of groups
-    let group_size = GetGroupSize.getGroupSize(
-      Map.size(community.volunteers),
-      parsed_optimization_mode,
+    await CreateRound.createRound(
+      context.apiGateway,
+      community_id,
+      title,
+      cohort.rounds, 
+      participants,
+      0,
+      optimization_mode
     );
-    let number_of_volunteers = shuffled_volunteers.size();
-    let number_of_groups = Float.toInt(Float.floor(Float.fromInt(number_of_volunteers) / Float.fromInt(group_size)));
-
-    // Collect the participants for each group
-    var participants : [Map.Map<Principal, Types.Participant>] = [];
-    var i : Nat = 0;
-
-    // Loop through all groups except the last one because the last one might have to accomodate for additional members that couldn't build their own group.
-    while (i < (number_of_groups - 1)) {
-      let from = i * group_size;
-      let to = (i + 1) * group_size;
-      let group_volunteers = Array.sliceToArray(
-        shuffled_volunteers,
-        from,
-        to,
-      );
-      let group_participants = Map.empty<Principal, Types.Participant>();
-
-      // We create particpants based on the volunteers
-      for ((user_id, _volunteer) in group_volunteers.vals()) {
-        let participant : Types.Participant = {
-          id = user_id;
-          var vote = null;
-        };
-
-        Map.add(
-          group_participants,
-          Principal.compare,
-          user_id,
-          participant,
-        );
-      };
-
-      participants := Array.concat(participants, [group_participants]);
-
-      i += 1;
-    };
-
-    // Add the last group's participants with additional members not being able to form their own group
-    let last_volunteers = Array.sliceToArray(
-      shuffled_volunteers,
-      group_size * (number_of_groups - 1),
-      Nat.toInt(number_of_volunteers), // The "to" is exclusive. When it's out of bounds, it will simply be clipped
-    );
-    let last_participants = Map.empty<Principal, Types.Participant>();
-
-    for ((user_id, _volunteer) in last_volunteers.vals()) {
-      let participant : Types.Participant = {
-        id = user_id;
-        var vote = null;
-      };
-
-      Map.add(
-        last_participants,
-        Principal.compare,
-        user_id,
-        participant,
-      );
-    };
-
-    participants := Array.concat(participants, [last_participants]);
-
-    // Create the group channels
-    for ((i, participants) in Array.enumerate(participants)) {
-      let title = Text.join(
-        "",
-        [
-          "Cohort ",
-          cohort.title,
-          " - Round ",
-          Nat.toText(round.iteration + 1),
-          " - Group ",
-          Nat.toText(i + 1),
-        ].values(),
-      );
-      let channel_creation = await create_group(
-        context,
-        client,
-        community_id,
-        round,
-        title,
-        participants,
-      );
-
-      switch (channel_creation) {
-        case (#ok()) {};
-
-        case (#err(error_message)) {
-          let message = await client.sendTextMessage(error_message).executeThenReturnMessage(null);
-
-          return #ok { message };
-        };
-      };
-    };
 
     let message = await client.sendTextMessage("Created cohort.").executeThenReturnMessage(null);
 
