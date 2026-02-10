@@ -1,5 +1,5 @@
 import Principal "mo:base/Principal";
-import List "mo:core/List";
+import Nat32 "mo:core/Nat";
 import Map "mo:core/Map";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
@@ -31,10 +31,14 @@ module {
     title : Text;
     started_at : Time.Time;
     rounds : Map.Map<Nat, Round>;
-    config : {
-      min_num_volunteers : Int;
-      optimization_mode : OptimizationMode;
-    };
+    var winner_ids : [Principal]; // We want to allow for mechanisms where multiple people can win, e.g., in case of ties
+    config : CohortConfig;
+  };
+
+  public type CohortConfig = {
+    min_num_volunteers : Int;
+    optimization_mode : OptimizationMode;
+    selection_mode : SelectionMode;
   };
 
   public type OptimizationMode = {
@@ -42,11 +46,9 @@ module {
     #speed;
   };
 
-  public func optimizationModeToText(mode : OptimizationMode) : Text {
-    switch (mode) {
-      case (#meritocracy) "Meritocracy";
-      case (#speed) "Speed";
-    };
+  public type SelectionMode = {
+    #single;
+    #panel;
   };
 
   // A cohort consists of several rounds.
@@ -63,7 +65,7 @@ module {
     channel_id : Nat32; // Channel IDs in OC are numbers
     title : Text;
     participants : Map.Map<Principal, Participant>;
-    var winner_ids : List.List<Principal>; // We want to allow for mechanisms where multiple people can advance, e.g., in case of ties
+    var winner_ids : [Principal]; // We want to allow for mechanisms where multiple people can advance, e.g., in case of ties
   };
 
   // The people in one group are called participants.
