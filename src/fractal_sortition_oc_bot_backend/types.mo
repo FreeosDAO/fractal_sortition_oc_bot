@@ -1,6 +1,6 @@
 import Principal "mo:base/Principal";
-import Nat32 "mo:core/Nat";
 import Map "mo:core/Map";
+import Nat32 "mo:core/Nat";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 
@@ -28,6 +28,7 @@ module {
   // A cohort consists of several rounds where members are grouped and vote for each other.
   public type Cohort = {
     id : Nat; // This is a simple counter that is auto-incremented.
+    channel_id : Nat32; // Channel IDs in OC are numbers
     title : Text;
     started_at : Time.Time;
     rounds : Map.Map<Nat, Round>;

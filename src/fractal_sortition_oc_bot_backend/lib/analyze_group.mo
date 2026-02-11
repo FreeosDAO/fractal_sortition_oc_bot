@@ -1,10 +1,10 @@
+import Array "mo:core/Array";
+import Iter "mo:core/Iter";
 import List "mo:core/List";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
-import Array "mo:core/Array";
 import Random "mo:core/Random";
-import Iter "mo:core/Iter";
 import Client "mo:openchat-bot-sdk/client";
 
 import Types "../types";
@@ -16,11 +16,9 @@ module {
     public func analyzeGroup(
         api_gateway : Principal,
         community_id : Principal,
-        cohort_title : Text,
-        rounds : Map.Map<Nat, Types.Round>, 
-        iteration : Nat,
+        cohort : Types.Cohort,
         group : Types.Group,
-        cohort_config : Types.CohortConfig,
+        iteration : Nat,
     ) : async () {
         // Check if all participants have voted
         if (not allParticipantsVoted(group)) {
@@ -36,7 +34,7 @@ module {
         let tallies = tallyVotes(group);
 
         // Save winners on group
-        group.winner_ids := await getWinners(tallies, cohort_config.selection_mode);
+        group.winner_ids := await getWinners(tallies, cohort.config.selection_mode);
 
         // Send message to the group who won the vote
         let autonomous_client = Client.OpenChatClient({
@@ -47,9 +45,9 @@ module {
             thread = null;
         });
         var text = if (Array.size(group.winner_ids) > 1) {
-            "Winners:";
+            "Group winners:";
         } else {
-            "Winner:";
+            "Group winner:";
         };
 
         for (principal in Iter.fromArray(group.winner_ids)) {
@@ -64,10 +62,8 @@ module {
             await AnalyzeRound.analyzeRound(
                 api_gateway,
                 community_id,
-                cohort_title,
-                rounds,
+                cohort,
                 iteration,
-                cohort_config.optimization_mode
             );
         };
     };

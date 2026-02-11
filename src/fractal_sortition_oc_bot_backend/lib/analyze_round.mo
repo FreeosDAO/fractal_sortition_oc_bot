@@ -1,22 +1,23 @@
-import Types "../types";
+import Array "mo:core/Array";
+import Iter "mo:core/Iter";
+import List "mo:core/List";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
-import Array "mo:core/Array";
-import List "mo:core/List";
-import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
+import Random "mo:core/Random";
+import Client "mo:openchat-bot-sdk/client";
+
+import Types "../types";
 import CreateRound "create_round";
 
 module {
     public func analyzeRound(
         api_gateway : Principal,
         community_id : Principal,
-        cohort_title : Text,
-        rounds : Map.Map<Nat, Types.Round>, 
+        cohort : Types.Cohort,
         iteration : Nat,
-        optimization_mode : Types.OptimizationMode
     ) : async () {
-        let ?round = Map.get(rounds, Nat.compare, iteration) else {
+        let ?round = Map.get(cohort.rounds, Nat.compare, iteration) else {
             return;
         };
 
@@ -40,15 +41,20 @@ module {
             await CreateRound.createRound(
                 api_gateway,
                 community_id,
-                cohort_title,
-                rounds,
-                List.toArray(winners), 
+                cohort.title,
+                cohort.rounds,
+                List.toArray(winners),
                 iteration + 1,
-                optimization_mode
+                cohort.config.optimization_mode,
             );
         } else {
-            await determineCohortWinners(List.toArray(winners));
-        }
+            await determineCohortWinners(
+                api_gateway,
+                community_id,
+                List.toArray(winners),
+                cohort,
+            );
+        };
     };
 
     func allGroupsHaveWinner(round : Types.Round) : Bool {
@@ -61,5 +67,42 @@ module {
         return true;
     };
 
-    func determineCohortWinners(finalists : [Principal]) : async () {};
-}
+    func determineCohortWinners(
+        api_gateway : Principal,
+        community_id : Principal,
+        finalists : [Principal],
+        cohort : Types.Cohort,
+    ) : async () {
+        // If we can only have a single winner, we pick a random one
+        if (cohort.config.selection_mode == #single) {
+            let number_of_finalists = Array.size(finalists);
+            let random_index = await* Random.crypto().natRange(0, number_of_finalists); // The second parameter is exclusive
+            let winner = finalists[random_index];
+
+            cohort.winner_ids := [winner];
+        } else {
+            cohort.winner_ids := finalists;
+        };
+
+        // Send message to the main channel who won the cohort
+        let autonomous_client = Client.OpenChatClient({
+            apiGateway = api_gateway;
+            scope = #Chat(#Channel(community_id, cohort.channel_id));
+            jwt = null;
+            messageId = null;
+            thread = null;
+        });
+        var text = if (Array.size(cohort.winner_ids) > 1) {
+            "Winners of cohort " # cohort.title # ":";
+        } else {
+            "Winner of cohort " # cohort.title # ":";
+        };
+
+        for (principal in Iter.fromArray(cohort.winner_ids)) {
+            text #= " @UserId(" # Principal.toText(principal) # ")";
+        };
+
+        // Send the message
+        ignore await autonomous_client.sendTextMessage(text).execute();
+    };
+};
