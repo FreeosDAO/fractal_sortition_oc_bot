@@ -4,6 +4,7 @@ import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
 import Time "mo:core/Time";
+import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 import Sdk "mo:openchat-bot-sdk";
 
 import GetCommunity "../lib/get_community";
@@ -33,6 +34,13 @@ module {
       ).executeThenReturnMessage(null);
 
       return #ok { message };
+    };
+
+    // Get the channel ID
+    let (?{ chat }) = CommandScope.chatDetails(context.scope) else return #err("Could not extract chat details");
+    let channel_id = switch (chat) {
+      case (#Channel(_, id)) id;
+      case (_) return #err("Could not extract channel ID");
     };
 
     // Get the arg values
@@ -82,6 +90,7 @@ module {
     let cohort : Types.Cohort = {
       id = community.cohorts.size; // This is an incremental ID so we just take the existing number of cohorts. This if fine since we don't delete cohorts.
       title = title;
+      channel_id = channel_id;
       started_at = Time.now();
       rounds = Map.empty<Nat, Types.Round>();
       var winner_ids = Array.empty<Principal>();
@@ -103,8 +112,8 @@ module {
     // ROUND CREATION
     let participants : [Principal] = Array.fromIter(
       Iter.map(
-        Map.entries(community.volunteers), 
-        func ((user_id, _volunteer)) = user_id
+        Map.entries(community.volunteers),
+        func((user_id, _volunteer)) = user_id,
       )
     );
 
@@ -112,10 +121,10 @@ module {
       context.apiGateway,
       community_id,
       title,
-      cohort.rounds, 
+      cohort.rounds,
       participants,
       0,
-      optimization_mode
+      optimization_mode,
     );
 
     let message = await client.sendTextMessage("Created cohort.").executeThenReturnMessage(null);

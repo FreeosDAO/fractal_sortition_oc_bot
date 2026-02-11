@@ -20,11 +20,9 @@ module {
     };
 
     type VoteContext = {
-        rounds : Map.Map<Nat, Types.Round>;
-        iteration : Nat;
+        cohort : Types.Cohort;
         group : Types.Group;
-        cohort_title : Text;
-        cohort_config : Types.CohortConfig;
+        iteration : Nat;
     };
 
     // For now, we have to iterate through all cohorts and their rounds until we
@@ -38,11 +36,9 @@ module {
                 for ((_, group) in Map.entries(round.groups)) {
                     if (group.channel_id == channel_id) {
                         return ?{
-                            rounds = cohort.rounds;
-                            iteration = round.iteration;
+                            cohort = cohort;
                             group = group;
-                            cohort_title = cohort.title;
-                            cohort_config = cohort.config;
+                            iteration = round.iteration;
                         };
                     };
                 };
@@ -147,13 +143,11 @@ module {
         // We will analyze whether the group has a winner in a detached async task
         ignore async {
             await AnalyzeGroup.analyzeGroup(
-                context.apiGateway, 
-                community_id, 
-                vote_context.cohort_title,
-                vote_context.rounds, 
-                vote_context.iteration,
+                context.apiGateway,
+                community_id,
+                vote_context.cohort,
                 vote_context.group,
-                vote_context.cohort_config
+                vote_context.iteration,
             );
         };
 
