@@ -46,7 +46,9 @@ In each round, they are voting for someone to advance.
 
 # Testing the bot
 
-**Prerequisites**: DFX 0.29.1
+OpenChat is still using `dfx`. Therefore, for local deployment we also have to use it since we need to verify the OC token during deployment.
+
+**Prerequisites**: `dfx 0.31.0-beta.1`
 
 In order to test the bot, you need a locally running instance of OpenChat running.
 
@@ -55,7 +57,7 @@ Please refer to the [OpenChat README.md](https://github.com/open-chat-labs/open-
 Once you have OpenChat running, you can deploy the bot by running the deployment script:
 
 ```zsh
-./deploy.sh
+./scripts/deploy-local.sh
 ```
 
 If the deploy has been successful, the script will print out the **principal** and the **endpoint**. You will need these values when registering the bot in a group chat.
@@ -67,17 +69,3 @@ After registering the bot, you will still have to "invite" it to the channel by 
 Once the bot is added to the channel, you can use its commands.
 
 For more detailed instructions on how to add the bot, please refer to the [Bot SDK's "Get Started" guide](https://github.com/open-chat-labs/open-chat-bots/blob/main/GETSTARTED.md).
-
-## Updating the bot
-
-If you add new commands to the bot, there currently isn't a way to seemlessly upgrade the bot commands from a running OpenChat instance.
-
-In order to test new commands, you have to:
-
-- Delete the `.dfx/` at the root
-- Restart your DFX with `dfx start --clean`
-- Re-install OpenChat
-- Re-deploy the bot
-- Create a group chat and register the bot
-
-It is also recommended to clear the browser cache.

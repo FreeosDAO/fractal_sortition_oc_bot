@@ -9,6 +9,7 @@ import Volunteer "commands/volunteer";
 import Vote "commands/vote";
 import Definition "definition";
 import Types "types";
+
 persistent actor class FractalSortitionBot(key : Text) {
   // State
   var community_registry : Types.CommunityRegistry = Map.empty();

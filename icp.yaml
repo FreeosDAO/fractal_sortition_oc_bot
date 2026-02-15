@@ -1,0 +1,10 @@
+canisters:
+  - name: fractal_sortition_oc_bot_backend
+    recipe:
+      type: "@dfinity/motoko@v4.0.0"
+      configuration:
+        main: src/fractal_sortition_oc_bot_backend/main.mo
+        args:
+    # The public key is not likely to change and at the moment, we don't know about a way to pass this value dynamically upon deployment
+    # For updates, see the forum: https://forum.dfinity.org/t/icp-cli-announcements-and-feedback-discussion/60410/38
+    init_args: "(\"-----BEGIN PUBLIC KEY-----MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEquEHzJr9605Oy796e4z7LKow46DVNUnDOQWavi86vEhRAAfdbVh/Lgmxfi44LPb6S0wnCRm9kI/XdK1DYw2Eaw==-----END PUBLIC KEY-----\")"

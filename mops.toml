@@ -1,3 +1,10 @@
 [dependencies]
 core = "1.0.0"
 openchat-bot-sdk = "0.6.0"
+
+[toolchain]
+moc = "1.0.0"
+wasmtime = "40.0.0"
+
+[requirements]
+moc = "1.0.0"
