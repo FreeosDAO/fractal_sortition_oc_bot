@@ -24,7 +24,7 @@ module {
         rounds : Map.Map<Nat, Types.Round>,
         participants : [Principal],
         iteration : Nat,
-        optimization_mode : Types.OptimizationMode
+        optimization_mode : Types.OptimizationMode,
     ) : async () {
         let round : Types.Round = {
             iteration = iteration;
@@ -121,7 +121,6 @@ module {
             ignore async {
                 let participants = groups[i];
                 let title = Text.join(
-                    "",
                     [
                         "Cohort ",
                         cohort_title,
@@ -130,6 +129,7 @@ module {
                         " - Group ",
                         Nat.toText(i + 1),
                     ].values(),
+                    "",
                 );
 
                 await createGroup(
@@ -139,8 +139,8 @@ module {
                     title,
                     participants,
                 );
-            }
-        }
+            };
+        };
     };
 
     func createGroup(

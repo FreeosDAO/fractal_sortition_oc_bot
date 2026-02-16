@@ -1,9 +1,8 @@
-import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Time "mo:core/Time";
 import Sdk "mo:openchat-bot-sdk";
 
 import GetCommunity "../lib/get_community";
+import Volunteer "../lib/volunteer";
 import Types "../types";
 
 // The "volunteer" function registers the person calling it as a volunteer
@@ -33,32 +32,15 @@ module {
     // Get the user_id of the person volunteering
     let user_id = context.command.initiator;
 
-    // Check whether the user is already included in the community's list of volunteers
-    switch (Map.get(community.volunteers, Principal.compare, user_id)) {
-      // The user isn't registered yet as a volunteer
-      case (null) {
-        Map.add(
-          community.volunteers,
-          Principal.compare,
-          user_id,
-          {
-            user_id = user_id;
-            registered_at = Time.now();
-          },
-        );
-
-        // Construct the message that is returned when the registration was successful
+    switch (Volunteer.volunteer(user_id, community.volunteers)) {
+      case (#ok(_)) {
         let text = "New volunteer in community: @UserId(" # Principal.toText(user_id) # ")";
         let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
 
         return #ok { message = message };
       };
-
-      // The user has already been registered
-      case (?_) {
-        // Construct the message that is returned when the user already volunteered in the past
-        let text = "You've already registered as a volunteer.";
-        let message = await client.sendTextMessage(text).executeThenReturnMessage(null);
+      case (#err(error_message)) {
+        let message = await client.sendTextMessage(error_message).executeThenReturnMessage(null);
 
         return #ok { message = message };
       };
