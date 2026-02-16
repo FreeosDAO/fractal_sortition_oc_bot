@@ -47,5 +47,25 @@ suite(
                 };
             },
         );
+
+        test(
+            "Can't volunteer multiple times",
+            func() {
+                let volunteers = Map.empty<Principal, Types.Volunteer>();
+                let user_id = Principal.fromText("w7x7r-cok77-xa");
+
+                // Add user using the volunteer function
+                let result_initial : Result.Result<Bool, Text> = Volunteer.volunteer(user_id, volunteers);
+
+                // We expect that can volunteer initially
+                expect.result<Bool, Text>(result_initial, showResult, equalResult).equal(#ok(true));
+
+                // Try to volunteer again
+                let result_retry : Result.Result<Bool, Text> = Volunteer.volunteer(user_id, volunteers);
+
+                // We expect an error when they try again
+                expect.result<Bool, Text>(result_retry, showResult, equalResult).equal(#err("User already volunteered"));
+            }
+        )
     },
 );
