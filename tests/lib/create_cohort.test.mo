@@ -51,7 +51,8 @@ suite(
                 let config : Types.CohortConfig = {
                     min_num_volunteers = 9;
                     optimization_mode = #meritocracy;
-                    selection_mode = #single;
+                    selection_mode = #panel;
+                    advancement_limit = ?2;
                 };
                 let community : Types.Community = {
                     id = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
@@ -96,6 +97,7 @@ suite(
                     min_num_volunteers = 9;
                     optimization_mode = #meritocracy;
                     selection_mode = #single;
+                    advancement_limit = null;
                 };
                 let community : Types.Community = {
                     id = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
@@ -136,6 +138,7 @@ suite(
                     min_num_volunteers = 8;
                     optimization_mode = #meritocracy;
                     selection_mode = #single;
+                    advancement_limit = null;
                 };
                 let community : Types.Community = {
                     id = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
@@ -149,6 +152,78 @@ suite(
 
                 // Expect the cohort creation to fail
                 expect.result<Types.Cohort, Text>(result, showResult, equalResult).equal(#err("The minimum number of volunteers has to be set to at least 9"));
+
+                // Check that no cohort has been added to the community
+                expect.option(
+                    Map.get(community.cohorts, Nat.compare, 0), 
+                    func (c) {
+                        debug_show(c);
+                    },
+                    func (c1: Types.Cohort, c2: Types.Cohort) : Bool {
+                        c1.id == c2.id;
+                    }
+                ).isNull();
+            }
+        );
+
+        test(
+            "Cannot create cohort if advancement limit is not set when the selection mode is #panel",
+            func() {
+                let title : Text = "Education";
+                let config : Types.CohortConfig = {
+                    min_num_volunteers = 9;
+                    optimization_mode = #meritocracy;
+                    selection_mode = #panel;
+                    advancement_limit = null;
+                };
+                let community : Types.Community = {
+                    id = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
+                    volunteers = Map.empty<Principal, Types.Volunteer>();
+                    cohorts = Map.empty<Nat, Types.Cohort>();
+                };
+                let channel_id : Nat32 = 6374638;
+
+                // Try to create cohort
+                let result = CreateCohort.create_cohort(title, config, community, channel_id);
+
+                // Expect the cohort creation to fail
+                expect.result<Types.Cohort, Text>(result, showResult, equalResult).equal(#err("The advancement limit needs to be set for selection mode #panel"));
+
+                // Check that no cohort has been added to the community
+                expect.option(
+                    Map.get(community.cohorts, Nat.compare, 0), 
+                    func (c) {
+                        debug_show(c);
+                    },
+                    func (c1: Types.Cohort, c2: Types.Cohort) : Bool {
+                        c1.id == c2.id;
+                    }
+                ).isNull();
+            }
+        );
+
+        test(
+            "Cannot create cohort if advancement limit is not set to at least 2 when the selection mode is #panel",
+            func() {
+                let title : Text = "Education";
+                let config : Types.CohortConfig = {
+                    min_num_volunteers = 9;
+                    optimization_mode = #meritocracy;
+                    selection_mode = #panel;
+                    advancement_limit = ?1;
+                };
+                let community : Types.Community = {
+                    id = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
+                    volunteers = Map.empty<Principal, Types.Volunteer>();
+                    cohorts = Map.empty<Nat, Types.Cohort>();
+                };
+                let channel_id : Nat32 = 6374638;
+
+                // Try to create cohort
+                let result = CreateCohort.create_cohort(title, config, community, channel_id);
+
+                // Expect the cohort creation to fail
+                expect.result<Types.Cohort, Text>(result, showResult, equalResult).equal(#err("The advancement limit needs to be set to at least 2"));
 
                 // Check that no cohort has been added to the community
                 expect.option(

@@ -2,6 +2,7 @@ import Array "mo:core/Array";
 import Iter "mo:core/Iter";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
+import Nat "mo:core/Nat";
 import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 import Sdk "mo:openchat-bot-sdk";
 
@@ -47,6 +48,7 @@ module {
     let min_num_volunteers = Sdk.Command.Arg.int(context.command, "min_num_volunteers");
     let optimization_mode_arg = Sdk.Command.Arg.text(context.command, "optimization_mode");
     let selection_mode_arg = Sdk.Command.Arg.text(context.command, "selection_mode");
+    let advancement_limit = Sdk.Command.Arg.maybeInt(context.command, "advancement_limit");
 
     // Convert the Text -> OptimizationMode variant
     let optimization_mode : Types.OptimizationMode = switch (optimization_mode_arg) {
@@ -81,6 +83,10 @@ module {
           min_num_volunteers = min_num_volunteers;
           optimization_mode = optimization_mode;
           selection_mode = selection_mode;
+          advancement_limit = switch (advancement_limit) {
+            case (null) null;
+            case (?al) ?Nat.fromInt(al);
+          }
         },
         community,
         channel_id,
@@ -188,6 +194,17 @@ module {
             ];
           };
         },
+        {
+          name = "advancement_limit";
+          description = ?"The maximum number of people advancing depending on the selction mode";
+          placeholder = ?"Set the advancement limit";
+          required = false;
+          param_type = #IntegerParam {
+            min_value = 2; // Having an advancement that's smaller than 2 is not a panel but single selection
+            max_value = 9999; // We have to provide a max value
+            choices = [];
+          };
+        }
       ];
       permissions = {
         community = [#CreatePrivateChannel];

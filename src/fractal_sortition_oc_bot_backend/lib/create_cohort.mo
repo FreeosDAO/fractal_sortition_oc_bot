@@ -19,6 +19,22 @@ module {
             return #err("The minimum number of volunteers has to be set to at least 9");
         };
 
+        // Check the advancement limit configuration when the selection mode is #panel
+        if (config.selection_mode == #panel) {
+            switch (config.advancement_limit) {
+                // Check that the advancement limit is set
+                case null {
+                    return #err("The advancement limit needs to be set for selection mode #panel");
+                };
+                // Check that the advancement limit is at least 2
+                case (?limit) {
+                    if (limit < 2) {
+                        return #err("The advancement limit needs to be set to at least 2");
+                    };
+                };
+            };
+        };
+
         // We check that the minimum number of volunteers is reached
         if (Map.size(community.volunteers) < config.min_num_volunteers) {
             return #err("There are not enough volunteers to create the cohort");

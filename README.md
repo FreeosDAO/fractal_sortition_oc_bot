@@ -69,3 +69,13 @@ After registering the bot, you will still have to "invite" it to the channel by 
 Once the bot is added to the channel, you can use its commands.
 
 For more detailed instructions on how to add the bot, please refer to the [Bot SDK's "Get Started" guide](https://github.com/open-chat-labs/open-chat-bots/blob/main/GETSTARTED.md).
+
+# Migrations
+
+When we change our types, we might have to migrate data. 
+
+For that, write explicit migration functions and reference the old types under `src/fractal_sortition_oc_bot_backend/migrations`.
+
+Apply the migration once by adding it to the actor class in `src/fractal_sortition_oc_bot_backend/main.mo` as `(with migration)`.
+
+Once the migration is applied, simply remove the `(with migration)`.
