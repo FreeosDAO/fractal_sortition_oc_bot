@@ -127,5 +127,40 @@ suite(
                 ).isNull();
             },
         );
+
+        test(
+            "Cannot create a cohort if min_num_volunteers is set to less than 9",
+            func() {
+                let title : Text = "Education";
+                let config : Types.CohortConfig = {
+                    min_num_volunteers = 8;
+                    optimization_mode = #meritocracy;
+                    selection_mode = #single;
+                };
+                let community : Types.Community = {
+                    id = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
+                    volunteers = Map.empty<Principal, Types.Volunteer>();
+                    cohorts = Map.empty<Nat, Types.Cohort>();
+                };
+                let channel_id : Nat32 = 6374638;
+
+                // Try to create cohort
+                let result = CreateCohort.create_cohort(title, config, community, channel_id);
+
+                // Expect the cohort creation to fail
+                expect.result<Types.Cohort, Text>(result, showResult, equalResult).equal(#err("The minimum number of volunteers has to be set to at least 9"));
+
+                // Check that no cohort has been added to the community
+                expect.option(
+                    Map.get(community.cohorts, Nat.compare, 0), 
+                    func (c) {
+                        debug_show(c);
+                    },
+                    func (c1: Types.Cohort, c2: Types.Cohort) : Bool {
+                        c1.id == c2.id;
+                    }
+                ).isNull();
+            }
+        );
     },
 );

@@ -14,7 +14,12 @@ module {
         community : Types.Community,
         channel_id : Nat32
     ) : Result.Result<Types.Cohort, Text> {
-        // First, we check that the minimum number of volunteers is reached
+        // Check that the min_num_volunteers is set to at least 9 to allow for a meaningful creation of groups
+        if (config.min_num_volunteers < 9) {
+            return #err("The minimum number of volunteers has to be set to at least 9");
+        };
+
+        // We check that the minimum number of volunteers is reached
         if (Map.size(community.volunteers) < config.min_num_volunteers) {
             return #err("There are not enough volunteers to create the cohort");
         };
