@@ -70,7 +70,7 @@ await suite(
         );
 
         await test(
-            "Cohort winner selection only returns a single user ID for selection mode #panel",
+            "Cohort winner selection only returns a single user ID for selection mode #single",
             func() : async () {
                 // Get the winners
                 let result = await AnalyzeRound.determineCohortWinners(

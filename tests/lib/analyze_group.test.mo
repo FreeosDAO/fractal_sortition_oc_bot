@@ -80,7 +80,7 @@ await suite(
         );
 
         await test(
-            "Group analyzation only returns a single user ID for selection mode #panel",
+            "Group analyzation only returns a single user ID for selection mode #single",
             func() : async () {
                 let tallies = Map.empty<Principal, Nat>();
 
