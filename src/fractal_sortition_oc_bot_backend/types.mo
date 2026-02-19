@@ -40,6 +40,7 @@ module {
     min_num_volunteers : Int;
     optimization_mode : OptimizationMode;
     selection_mode : SelectionMode;
+    advancement_limit : ?Nat; // If the selection mode is #panel, then the advancement limit has to be specified
   };
 
   public type OptimizationMode = {

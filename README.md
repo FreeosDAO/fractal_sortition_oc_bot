@@ -44,6 +44,46 @@ In each round, they are voting for someone to advance.
 
 `/vote`: Participants vote for others in their group to advance to the next round.
 
+## Cohort Configuration
+
+### Minimum number of volunteers
+
+This parameter specifies how many people in the community need to have registered as
+volunteers to create the cohort.
+
+The minimum required value is `9` to be able to form a meaningful constellation of groups.
+Here, we have to consider that the selection mode might be set to `single`.
+This means we want at least `3` groups with at least `3` participants each to start with
+so that everybody has at least `2` options for their vote in all rounds.
+
+### Optimization mode
+
+For cohorts with many members, the optimization mode influences how big the groups of a
+round are.
+
+If we want less rounds, `speed` should be selected. This means we have larger groups.
+
+If `meritocracy` is selected, then we have smaller groups but more rounds.
+
+### Selection mode
+
+When all votes are in, we might have situations where multiple members received the same
+amount of votes. In order to dertermine who is the winner of a vote, the selection mode
+is the determining factor.
+
+When the selection mode is `single`, then one random person is selected out of the ties.
+
+If the selection mode is `panel`, then multiple people are randomly selected out of the ties.
+
+### Advancement limit
+
+When the selection mode is set to `panel`, then the advancement limit determines how many
+people are randomly picked out of the ties. 
+
+The advancement limit is an upper bound. For example, should we have `5` ties and the 
+advancement limit is set to `3`, then `3` people are randomly selected. Should we have
+only `2` ties while the advancement limit is set to `3`, then both people are the winners.
+
 # Testing the bot
 
 OpenChat is still using `dfx`. Therefore, for local deployment we also have to use it since we need to verify the OC token during deployment.
@@ -69,3 +109,13 @@ After registering the bot, you will still have to "invite" it to the channel by 
 Once the bot is added to the channel, you can use its commands.
 
 For more detailed instructions on how to add the bot, please refer to the [Bot SDK's "Get Started" guide](https://github.com/open-chat-labs/open-chat-bots/blob/main/GETSTARTED.md).
+
+# Migrations
+
+When we change our types, we might have to migrate data. 
+
+For that, write explicit migration functions and reference the old types under `src/fractal_sortition_oc_bot_backend/migrations`.
+
+Apply the migration once by adding it to the actor class in `src/fractal_sortition_oc_bot_backend/main.mo` as `(with migration)`.
+
+Once the migration is applied, simply remove the `(with migration)`.

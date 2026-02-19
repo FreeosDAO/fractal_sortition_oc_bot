@@ -1,15 +1,15 @@
 import Array "mo:core/Array";
 import Iter "mo:core/Iter";
 import Map "mo:core/Map";
-import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
-import Time "mo:core/Time";
+import Nat "mo:core/Nat";
 import CommandScope "mo:openchat-bot-sdk/api/common/commandScope";
 import Sdk "mo:openchat-bot-sdk";
 
 import GetCommunity "../lib/get_community";
 import Types "../types";
 import CreateRound "../lib/create_round";
+import CreateCohort "../lib/create_cohort";
 
 // The "create_cohort" command creates a cohort and the initial set of groups based on the list of volunteers
 module {
@@ -48,6 +48,7 @@ module {
     let min_num_volunteers = Sdk.Command.Arg.int(context.command, "min_num_volunteers");
     let optimization_mode_arg = Sdk.Command.Arg.text(context.command, "optimization_mode");
     let selection_mode_arg = Sdk.Command.Arg.text(context.command, "selection_mode");
+    let advancement_limit = Sdk.Command.Arg.maybeInt(context.command, "advancement_limit");
 
     // Convert the Text -> OptimizationMode variant
     let optimization_mode : Types.OptimizationMode = switch (optimization_mode_arg) {
@@ -75,39 +76,29 @@ module {
       };
     };
 
-    // First, we check that the minimum number of volunteers is reached
-    if (Map.size(community.volunteers) < min_num_volunteers) {
-      let message = await client.sendTextMessage(
-        "There are not enough volunteers to create the cohort"
-      ).executeThenReturnMessage(null);
+    let cohort = switch (
+      CreateCohort.create_cohort(
+        title,
+        {
+          min_num_volunteers = min_num_volunteers;
+          optimization_mode = optimization_mode;
+          selection_mode = selection_mode;
+          advancement_limit = switch (advancement_limit) {
+            case (null) null;
+            case (?al) ?Nat.fromInt(al);
+          }
+        },
+        community,
+        channel_id,
+      )
+    ) {
+      case (#ok(c)) c;
+      case (#err(error_message)) {
+        let message = await client.sendTextMessage(error_message).executeThenReturnMessage(null);
 
-      return #ok { message };
-    };
-
-    // COHORT CREATION
-
-    // Create the cohort based on the args.
-    let cohort : Types.Cohort = {
-      id = community.cohorts.size; // This is an incremental ID so we just take the existing number of cohorts. This if fine since we don't delete cohorts.
-      title = title;
-      channel_id = channel_id;
-      started_at = Time.now();
-      rounds = Map.empty<Nat, Types.Round>();
-      var winner_ids = Array.empty<Principal>();
-      config = {
-        min_num_volunteers = min_num_volunteers;
-        optimization_mode = optimization_mode;
-        selection_mode = selection_mode;
+        return #err(error_message);
       };
     };
-
-    // Save the cohort in the community
-    Map.add(
-      community.cohorts,
-      Nat.compare,
-      cohort.id,
-      cohort,
-    );
 
     // ROUND CREATION
     let participants : [Principal] = Array.fromIter(
@@ -203,6 +194,17 @@ module {
             ];
           };
         },
+        {
+          name = "advancement_limit";
+          description = ?"The maximum number of people advancing depending on the selction mode";
+          placeholder = ?"Set the advancement limit";
+          required = false;
+          param_type = #IntegerParam {
+            min_value = 2; // Having an advancement that's smaller than 2 is not a panel but single selection
+            max_value = 9999; // We have to provide a max value
+            choices = [];
+          };
+        }
       ];
       permissions = {
         community = [#CreatePrivateChannel];

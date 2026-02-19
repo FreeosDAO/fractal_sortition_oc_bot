@@ -7,6 +7,7 @@ import { expect; suite; test } "mo:test";
 
 import Volunteer "../../src/fractal_sortition_oc_bot_backend/lib/volunteer";
 import Types "../../src/fractal_sortition_oc_bot_backend/types";
+import Helpers "./helpers";
 
 func showResult(r : Result.Result<Bool, Text>) : Text {
     debug_show (r);
@@ -26,11 +27,8 @@ suite(
             "Can volunteer",
             func() {
                 let volunteers = Map.empty<Principal, Types.Volunteer>();
-                let user_id_1 = Principal.fromText("w7x7r-cok77-xa");
-                let user_id_2 = Principal.fromText("2chl6-4hpzw-vqaaa-aaaaa-c");
-                let user_id_3 = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
 
-                for (user_id in Iter.fromArray([user_id_1, user_id_2, user_id_3])) {
+                for (user_id in Iter.fromArray(Helpers.random_principals())) {
                     // Add user using the volunteer function
                     let result : Result.Result<Bool, Text> = Volunteer.volunteer(user_id, volunteers);
 
@@ -65,7 +63,7 @@ suite(
 
                 // We expect an error when they try again
                 expect.result<Bool, Text>(result_retry, showResult, equalResult).equal(#err("User already volunteered"));
-            }
-        )
+            },
+        );
     },
 );
